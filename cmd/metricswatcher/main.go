@@ -1,11 +1,12 @@
 package main
 
 import (
-	metricswatcher "github.com/shibataka000/metrics-watcher/pkg/metricswatcher"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"flag"
 	"os"
 	"path/filepath"
+
+	metricswatcher "github.com/shibataka000/metrics-watcher/pkg/metricswatcher"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -25,7 +26,7 @@ func main() {
 		panic(err.Error())
 	}
 
-	metricswatcher.Watch(config);
+	metricswatcher.Watch(config)
 }
 
 func homeDir() string {
