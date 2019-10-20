@@ -1,37 +1,51 @@
 package main
 
 import (
-	"flag"
+	"log"
 	"os"
 	"path/filepath"
 
-	metricswatcher "github.com/shibataka000/metrics-watcher/pkg/metricswatcher"
+	"github.com/shibataka000/metrics-watcher/pkg/metricswatcher"
+	"github.com/urfave/cli"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func main() {
-	var kubeconfig *string
-
-	if home := homeDir(); home != "" {
-		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	} else {
-		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	}
-	flag.Parse()
-
-	// use the current context in kubeconfig
-	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+func action(c *cli.Context) error {
+	config, err := clientcmd.BuildConfigFromFlags("", c.String("kubeconfig"))
 	if err != nil {
-		panic(err.Error())
+		return err
 	}
-
-	metricswatcher.Watch(config)
+	metricswatcher.Watch(config, c.String("namespace"))
+	return nil
 }
 
-func homeDir() string {
-	if h := os.Getenv("HOME"); h != "" {
-		return h
+func main() {
+	app := cli.NewApp()
+	app.Name = "metricswatcher"
+	app.Usage = "Output some information to know HorizontalPodAutoscaler internal behavior"
+	app.UsageText = "metricswatcher pod_prefix"
+	app.Version = "v0.0.1"
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "kubeconfig",
+			Value: filepath.Join(os.Getenv("HOME"), ".kube", "config"),
+			Usage: "Path to the kubeconfig file to use for CLI requests.",
+		},
+		cli.StringFlag{
+			Name:  "context",
+			Value: "",
+			Usage: "The name of the kubeconfig context to use",
+		},
+		cli.StringFlag{
+			Name:  "namespace, n",
+			Value: "default",
+			Usage: "If present, the namespace scope for this CLI request",
+		},
 	}
-	return os.Getenv("USERPROFILE") // windows
+	app.Action = action
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

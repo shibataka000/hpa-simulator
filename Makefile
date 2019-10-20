@@ -5,7 +5,7 @@ VERSION = $(shell git describe --tags)
 GOX_OSARCH="darwin/amd64 linux/amd64 windows/amd64"
 GOX_OUTPUT="./build/{{.Dir}}_$(VERSION)_{{.OS}}_{{.Arch}}"
 
-default: build
+default: run
 
 setup:
 	go get golang.org/x/lint/golint
