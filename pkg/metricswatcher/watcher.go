@@ -12,7 +12,10 @@ import (
 func Watch(config *rest.Config, namespace string) error {
 	metricsClient := resourceclient.NewForConfigOrDie(config)
 	for {
-		calcReplicas(metricsClient, namespace)
+		err := calcReplicas(metricsClient, namespace)
+		if err != nil {
+			return err
+		}
 	}
 }
 
