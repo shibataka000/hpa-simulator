@@ -5,14 +5,14 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/shibataka000/metrics-watcher/pkg/kubernetes"
 	"github.com/shibataka000/metrics-watcher/pkg/metricswatcher"
 	"github.com/urfave/cli"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 func action(c *cli.Context) error {
-	config, err := clientcmd.BuildConfigFromFlags("", c.String("kubeconfig"))
+	config, err := kubernetes.NewClientConfig(c.String("kubeconfig"), c.String("context"))
 	if err != nil {
 		return err
 	}
