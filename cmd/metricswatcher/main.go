@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/shibataka000/metrics-watcher/pkg/kubernetes"
 	"github.com/shibataka000/metrics-watcher/pkg/metricswatcher"
@@ -16,7 +17,14 @@ func action(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	metricswatcher.Watch(config, c.String("namespace"))
+
+	podQuery := c.Args().Get(0)
+	podQueryRegex, err := regexp.Compile(podQuery)
+	if err != nil {
+		return err
+	}
+
+	metricswatcher.Watch(config, c.String("namespace"), podQueryRegex)
 	return nil
 }
 
@@ -24,7 +32,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "metricswatcher"
 	app.Usage = "Output some information to know HorizontalPodAutoscaler internal behavior"
-	app.UsageText = "metricswatcher pod_prefix"
+	app.UsageText = "metricswatcher [pod_query]"
 	app.Version = "v0.0.1"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
