@@ -23,14 +23,14 @@ type PodMetric struct {
 type PodMetricsInfo map[string]PodMetric
 
 // https://github.com/kubernetes/kubernetes/blob/81a8b9804a3bf310cb74446bd8a8e08e0317de22/pkg/controller/podautoscaler/replica_calculator.go#L62
-func getResourceReplicas(watcher *metricsWatcher, config *config, selector labels.Selector, currentReplicas int32) (replicaCount int32, err error) {
-	metrics, _, err := getResourceMetric(watcher.metricsClient, config.resource, config.namespace, selector)
+func getResourceReplicas(watcher *metricsWatcher, config *config, currentReplicas int32) (replicaCount int32, err error) {
+	metrics, _, err := getResourceMetric(watcher.metricsClient, config.resource, config.namespace, config.selector)
 	if err != nil {
 		return 0, err
 	}
 
 	podLister := watcher.podInformer.Lister()
-	podList, err := podLister.Pods(config.namespace).List(selector)
+	podList, err := podLister.Pods(config.namespace).List(config.selector)
 	if len(podList) == 0 {
 		return 0, fmt.Errorf("len(podList) == 0")
 	}
@@ -50,7 +50,6 @@ func getResourceReplicas(watcher *metricsWatcher, config *config, selector label
 	if err != nil {
 		return 0, err
 	}
-	log.Printf("%v\n", usageRatio)
 
 	rebalanceIgnored := len(ignoredPods) > 0 && usageRatio > 1.0
 	if !rebalanceIgnored && len(missingPods) == 0 {
@@ -228,7 +227,7 @@ func getResourceUtilizationRatio(metrics PodMetricsInfo, requests map[string]int
 		requestsTotal += request
 		numEntries++
 
-		log.Printf("[Pod Resource Utilization] %v: %v / %v = %v\n", podName, metric.Value, request, float64(metric.Value)/float64(request))
+		log.Printf("[Pod Resource Utilization] %v: %v / %v = %v %%\n", podName, metric.Value, request, int32(float64(100)*float64(metric.Value)/float64(request)))
 	}
 
 	// if the set of requests is completely disjoint from the set of metrics,
@@ -238,7 +237,7 @@ func getResourceUtilizationRatio(metrics PodMetricsInfo, requests map[string]int
 	}
 
 	currentUtilization = int32((metricsTotal * 100) / requestsTotal)
-	log.Printf("[Deployment Resource Utilization] %v\n", currentUtilization)
+	log.Printf("[Deployment Resource Utilization] %v %%\n", currentUtilization)
 
 	return float64(currentUtilization) / float64(targetUtilization), currentUtilization, metricsTotal / int64(numEntries), nil
 }

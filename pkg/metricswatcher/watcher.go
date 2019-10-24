@@ -4,7 +4,6 @@ import (
 	"log"
 	"time"
 
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
 	corev1 "k8s.io/client-go/informers/core/v1"
@@ -47,15 +46,15 @@ func NewMetricsWatcher(clientConfig *rest.Config, config *config) (MetricsWatche
 
 func (watcher *metricsWatcher) Start() error {
 	currentReplicas := int32(1)
-	selector := labels.Everything()
 	for {
-		newReplicas, err := getResourceReplicas(watcher, watcher.config, selector, currentReplicas)
+		newReplicas, err := getResourceReplicas(watcher, watcher.config, currentReplicas)
 		if err != nil {
 			return err
 		}
 		if currentReplicas != newReplicas {
 			log.Printf("[Scale] %v -> %v\n", currentReplicas, newReplicas)
+			currentReplicas = newReplicas
 		}
-		log.Printf("====================\n")
+		log.Printf("========================================\n")
 	}
 }

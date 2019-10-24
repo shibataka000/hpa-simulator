@@ -9,7 +9,6 @@ import (
 
 type config struct {
 	namespace                     string
-	deployment                    string
 	cpuInitializationPeriod       time.Duration
 	delayOfInitialReadinessStatus time.Duration
 	resource                      v1.ResourceName
@@ -18,7 +17,7 @@ type config struct {
 	tolerance                     float64
 }
 
-func NewConfig(namespace string, deployment string) (*config, error) {
+func NewConfig(namespace string, selectorString string) (*config, error) {
 	cpuInitializationPeriod, err := time.ParseDuration("5m")
 	if err != nil {
 		return nil, err
@@ -28,13 +27,18 @@ func NewConfig(namespace string, deployment string) (*config, error) {
 		return nil, err
 	}
 
+	// selector := labels.Everything()
+	selector, err := labels.Parse(selectorString)
+	if err != nil {
+		return nil, err
+	}
+
 	return &config{
 		namespace,
-		deployment,
 		cpuInitializationPeriod,
 		delayOfInitialReadinessStatus,
 		v1.ResourceCPU,
-		labels.Everything(),
+		selector,
 		50,
 		0.1,
 	}, nil

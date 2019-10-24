@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,12 +17,7 @@ func action(c *cli.Context) error {
 		return err
 	}
 
-	deployment := c.Args().Get(0)
-	if len(deployment) == 0 {
-		return fmt.Errorf("You must specify deployment.")
-	}
-
-	config, err := metricswatcher.NewConfig(c.String("namespace"), deployment)
+	config, err := metricswatcher.NewConfig(c.String("namespace"), c.String("selector"))
 	if err != nil {
 		return err
 	}
@@ -38,7 +32,7 @@ func action(c *cli.Context) error {
 }
 
 func main() {
-	log.SetFlags(0)
+	// log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	app := cli.NewApp()
 	app.Name = "metricswatcher"
@@ -60,6 +54,11 @@ func main() {
 			Name:  "namespace, n",
 			Value: "default",
 			Usage: "If present, the namespace scope for this CLI request",
+		},
+		cli.StringFlag{
+			Name:  "selector, l",
+			Value: "",
+			Usage: "Selector (label query) to filter on, supports '='.(e.g. -l key1=value1,key2=value2)",
 		},
 	}
 	app.Action = action

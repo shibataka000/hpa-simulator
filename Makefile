@@ -25,7 +25,7 @@ lint:
 test:
 	go test $(TEST_TARGET)
 
-ci: checkfmt lint
+ci: build
 
 build: checkfmt lint test
 	cd cmd/metricswatcher; go build
@@ -34,10 +34,7 @@ build: checkfmt lint test
 install: fmt
 	cd cmd/metricswatcher; go install
 
-run:
-	cd cmd/metricswatcher; go run main.go
-
 release: checkfmt lint test
 	gox -osarch $(GOX_OSARCH) -output=$(GOX_OUTPUT)
 
-.PHONY: default setup fmt checkfmt lint test ci build install run release
+.PHONY: default setup fmt checkfmt lint test ci build install release
