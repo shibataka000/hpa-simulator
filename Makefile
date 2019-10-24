@@ -30,7 +30,8 @@ ci: checkfmt lint
 build: checkfmt lint test
 	cd cmd/metricswatcher; go build
 
-install: checkfmt lint test
+# install: checkfmt lint test
+install: fmt
 	cd cmd/metricswatcher; go install
 
 run:

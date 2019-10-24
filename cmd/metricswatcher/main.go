@@ -1,10 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 
 	"github.com/shibataka000/metrics-watcher/pkg/kubernetes"
 	"github.com/shibataka000/metrics-watcher/pkg/metricswatcher"
@@ -13,26 +13,37 @@ import (
 )
 
 func action(c *cli.Context) error {
-	config, err := kubernetes.NewClientConfig(c.String("kubeconfig"), c.String("context"))
+	clientConfig, err := kubernetes.NewClientConfig(c.String("kubeconfig"), c.String("context"))
 	if err != nil {
 		return err
 	}
 
-	podQuery := c.Args().Get(0)
-	podQueryRegex, err := regexp.Compile(podQuery)
+	deployment := c.Args().Get(0)
+	if len(deployment) == 0 {
+		return fmt.Errorf("You must specify deployment.")
+	}
+
+	config, err := metricswatcher.NewConfig(c.String("namespace"), deployment)
+	if err != nil {
+		return err
+	}
+	watcher, err := metricswatcher.NewMetricsWatcher(clientConfig, config)
 	if err != nil {
 		return err
 	}
 
-	metricswatcher.Watch(config, c.String("namespace"), podQueryRegex)
-	return nil
+	err = watcher.Start()
+
+	return err
 }
 
 func main() {
+	log.SetFlags(0)
+
 	app := cli.NewApp()
 	app.Name = "metricswatcher"
 	app.Usage = "Output some information to know HorizontalPodAutoscaler internal behavior"
-	app.UsageText = "metricswatcher [pod_query]"
+	app.UsageText = "metricswatcher deployment"
 	app.Version = "v0.0.1"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
