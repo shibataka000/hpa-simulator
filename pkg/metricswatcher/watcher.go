@@ -99,5 +99,7 @@ func (watcher *metricsWatcher) watch() error {
 	// 	}
 	// }
 
+	log.Printf("====================\n")
+
 	return nil
 }

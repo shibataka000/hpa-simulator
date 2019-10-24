@@ -41,9 +41,10 @@ func getResourceMetric(metricsClient *resourceclient.MetricsV1beta1Client, resou
 			resValue, found := c.Usage[v1.ResourceName(resource)]
 			if !found {
 				missing = true
-				fmt.Printf("missing resource metric %v for container %s in pod %s/%s\n", resource, c.Name, namespace, m.Name)
+				log.Printf("missing resource metric %v for container %s in pod %s/%s\n", resource, c.Name, namespace, m.Name)
 				break // containers loop
 			}
+			log.Printf("[Container Metrics] %v %v: %v\n", m.Name, c.Name, resValue.MilliValue())
 			podSum += resValue.MilliValue()
 		}
 
@@ -147,7 +148,7 @@ func getResourceUtilizationRatio(metrics PodMetricsInfo, requests map[string]int
 		requestsTotal += request
 		numEntries++
 
-		log.Printf("%v: %v / %v = %v\n", podName, metric.Value, request, float64(metric.Value)/float64(request))
+		log.Printf("[Pod Resource Utilization] %v: %v / %v = %v\n", podName, metric.Value, request, float64(metric.Value)/float64(request))
 	}
 
 	// if the set of requests is completely disjoint from the set of metrics,
@@ -157,7 +158,7 @@ func getResourceUtilizationRatio(metrics PodMetricsInfo, requests map[string]int
 	}
 
 	currentUtilization = int32((metricsTotal * 100) / requestsTotal)
-	log.Printf("Current Utilization is %v\n", currentUtilization)
+	log.Printf("[Deployment Resource Utilization] %v\n", currentUtilization)
 
 	return float64(currentUtilization) / float64(targetUtilization), currentUtilization, metricsTotal / int64(numEntries), nil
 }
