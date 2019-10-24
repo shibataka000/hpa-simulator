@@ -3,6 +3,7 @@ package metricswatcher
 import (
 	"fmt"
 	"log"
+	"math"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -20,6 +21,85 @@ type PodMetric struct {
 	Value     int64
 }
 type PodMetricsInfo map[string]PodMetric
+
+// https://github.com/kubernetes/kubernetes/blob/81a8b9804a3bf310cb74446bd8a8e08e0317de22/pkg/controller/podautoscaler/replica_calculator.go#L62
+func getResourceReplicas(watcher *metricsWatcher, config *config, selector labels.Selector, currentReplicas int32) (replicaCount int32, err error) {
+	metrics, _, err := getResourceMetric(watcher.metricsClient, config.resource, config.namespace, selector)
+	if err != nil {
+		return 0, err
+	}
+
+	podLister := watcher.podInformer.Lister()
+	podList, err := podLister.Pods(config.namespace).List(selector)
+	if len(podList) == 0 {
+		return 0, fmt.Errorf("len(podList) == 0")
+	}
+
+	readyPodCount, ignoredPods, missingPods := groupPods(podList, metrics, config.resource, config.cpuInitializationPeriod, config.delayOfInitialReadinessStatus)
+	removeMetricsForPods(metrics, ignoredPods)
+	requests, err := calculatePodRequests(podList, config.resource)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(metrics) == 0 {
+		return 0, fmt.Errorf("len(metrics) == 0")
+	}
+
+	usageRatio, _, _, err := getResourceUtilizationRatio(metrics, requests, config.targetUtilization)
+	if err != nil {
+		return 0, err
+	}
+	log.Printf("%v\n", usageRatio)
+
+	rebalanceIgnored := len(ignoredPods) > 0 && usageRatio > 1.0
+	if !rebalanceIgnored && len(missingPods) == 0 {
+		if math.Abs(1.0-usageRatio) <= config.tolerance {
+			// return the current replicas if the change would be too small
+			return currentReplicas, nil
+		}
+
+		// if we don't have any unready or missing pods, we can calculate the new replica count now
+		return int32(math.Ceil(usageRatio * float64(readyPodCount))), nil
+	}
+
+	if len(missingPods) > 0 {
+		if usageRatio < 1.0 {
+			// on a scale-down, treat missing pods as using 100% of the resource request
+			for podName := range missingPods {
+				metrics[podName] = PodMetric{Value: requests[podName]}
+			}
+		} else if usageRatio > 1.0 {
+			// on a scale-up, treat missing pods as using 0% of the resource request
+			for podName := range missingPods {
+				metrics[podName] = PodMetric{Value: 0}
+			}
+		}
+	}
+
+	if rebalanceIgnored {
+		// on a scale-up, treat unready pods as using 0% of the resource request
+		for podName := range ignoredPods {
+			metrics[podName] = PodMetric{Value: 0}
+		}
+	}
+
+	// re-run the utilization calculation with our new numbers
+	newUsageRatio, _, _, err := getResourceUtilizationRatio(metrics, requests, config.targetUtilization)
+	if err != nil {
+		return 0, err
+	}
+
+	if math.Abs(1.0-newUsageRatio) <= config.tolerance || (usageRatio < 1.0 && newUsageRatio > 1.0) || (usageRatio > 1.0 && newUsageRatio < 1.0) {
+		// return the current replicas if the change would be too small,
+		// or if the new usage ratio would cause a change in scale direction
+		return currentReplicas, nil
+	}
+
+	// return the result, where the number of replicas considered is
+	// however many replicas factored into our calculation
+	return int32(math.Ceil(newUsageRatio * float64(len(metrics)))), nil
+}
 
 // https://github.com/kubernetes/kubernetes/blob/81a8b9804a3bf310cb74446bd8a8e08e0317de22/pkg/controller/podautoscaler/replica_calculator.go#L62
 func getResourceMetric(metricsClient *resourceclient.MetricsV1beta1Client, resource v1.ResourceName, namespace string, selector labels.Selector) (PodMetricsInfo, time.Time, error) {

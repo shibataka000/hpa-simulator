@@ -1,7 +1,6 @@
 package metricswatcher
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -22,10 +21,10 @@ type MetricsWatcher interface {
 type metricsWatcher struct {
 	metricsClient *resourceclient.MetricsV1beta1Client
 	podInformer   corev1.PodInformer
-	config        *Config
+	config        *config
 }
 
-func NewMetricsWatcher(clientConfig *rest.Config, config *Config) (MetricsWatcher, error) {
+func NewMetricsWatcher(clientConfig *rest.Config, config *config) (MetricsWatcher, error) {
 	metricsClient := resourceclient.NewForConfigOrDie(clientConfig)
 
 	clientset, err := kubernetes.NewForConfig(clientConfig)
@@ -47,59 +46,16 @@ func NewMetricsWatcher(clientConfig *rest.Config, config *Config) (MetricsWatche
 }
 
 func (watcher *metricsWatcher) Start() error {
+	currentReplicas := int32(1)
+	selector := labels.Everything()
 	for {
-		if err := watcher.watch(); err != nil {
+		newReplicas, err := getResourceReplicas(watcher, watcher.config, selector, currentReplicas)
+		if err != nil {
 			return err
 		}
+		if currentReplicas != newReplicas {
+			log.Printf("[Scale] %v -> %v\n", currentReplicas, newReplicas)
+		}
+		log.Printf("====================\n")
 	}
-}
-
-func (watcher *metricsWatcher) watch() error {
-	config := watcher.config
-	selector := labels.Everything()
-
-	metrics, _, err := getResourceMetric(watcher.metricsClient, config.resource, config.namespace, selector)
-	if err != nil {
-		return err
-	}
-
-	podLister := watcher.podInformer.Lister()
-	podList, err := podLister.Pods(watcher.config.namespace).List(selector)
-	if len(podList) == 0 {
-		return fmt.Errorf("len(podList) == 0")
-	}
-	_, ignoredPods, _ := groupPods(podList, metrics, config.resource, config.cpuInitializationPeriod, config.delayOfInitialReadinessStatus)
-	removeMetricsForPods(metrics, ignoredPods)
-	requests, err := calculatePodRequests(podList, config.resource)
-	if err != nil {
-		return err
-	}
-	if len(metrics) == 0 {
-		return fmt.Errorf("len(metrics) == 0")
-	}
-	usageRatio, _, _, err := getResourceUtilizationRatio(metrics, requests, config.targetUtilization)
-	if err != nil {
-		return err
-	}
-	log.Printf("%v\n", usageRatio)
-
-	// metrics, err := watcher.metricsClient.PodMetricses(watcher.config.namespace).List(metav1.ListOptions{LabelSelector: selector.String()})
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	//
-	// now := time.Now().Format("2006/01/02 15:04:05.000")
-	// for _, pod := range metrics.Items {
-	// 	if !watcher.config.podQuery.MatchString(pod.OAName) {
-	// 		continue
-	// 	}
-	// 	for _, container := range pod.Containers {
-	// 		fmt.Printf("%v,%v,%v,%v,%v\n", now, pod.Name, container.Name, container.Usage.Cpu(), container.Usage.Memory())
-	// 	}
-	// }
-
-	log.Printf("====================\n")
-
-	return nil
 }

@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-type Config struct {
+type config struct {
 	namespace                     string
 	deployment                    string
 	cpuInitializationPeriod       time.Duration
@@ -15,9 +15,10 @@ type Config struct {
 	resource                      v1.ResourceName
 	selector                      labels.Selector
 	targetUtilization             int32
+	tolerance                     float64
 }
 
-func NewConfig(namespace string, deployment string) (*Config, error) {
+func NewConfig(namespace string, deployment string) (*config, error) {
 	cpuInitializationPeriod, err := time.ParseDuration("5m")
 	if err != nil {
 		return nil, err
@@ -27,7 +28,7 @@ func NewConfig(namespace string, deployment string) (*Config, error) {
 		return nil, err
 	}
 
-	return &Config{
+	return &config{
 		namespace,
 		deployment,
 		cpuInitializationPeriod,
@@ -35,5 +36,6 @@ func NewConfig(namespace string, deployment string) (*Config, error) {
 		v1.ResourceCPU,
 		labels.Everything(),
 		50,
+		0.1,
 	}, nil
 }
