@@ -16,7 +16,7 @@ func action(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("%v\n", clientConfig)
+	// log.Printf("%v\n", clientConfig)
 
 	config, err := hpasimulator.NewConfig(c.String("namespace"), c.String("selector"))
 	if err != nil {

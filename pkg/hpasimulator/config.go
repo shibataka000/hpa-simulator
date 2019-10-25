@@ -27,7 +27,6 @@ func NewConfig(namespace string, selectorString string) (*config, error) {
 		return nil, err
 	}
 
-	// selector := labels.Everything()
 	selector, err := labels.Parse(selectorString)
 	if err != nil {
 		return nil, err
