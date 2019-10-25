@@ -16,6 +16,7 @@ func action(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	log.Printf("%v\n", clientConfig)
 
 	config, err := metricswatcher.NewConfig(c.String("namespace"), c.String("selector"))
 	if err != nil {
@@ -32,8 +33,6 @@ func action(c *cli.Context) error {
 }
 
 func main() {
-	// log.SetFlags(log.LstdFlags | log.Lshortfile)
-
 	app := cli.NewApp()
 	app.Name = "metricswatcher"
 	app.Usage = "Output some information to know HorizontalPodAutoscaler internal behavior"

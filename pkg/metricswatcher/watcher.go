@@ -47,6 +47,7 @@ func NewMetricsWatcher(clientConfig *rest.Config, config *config) (MetricsWatche
 func (watcher *metricsWatcher) Start() error {
 	currentReplicas := int32(1)
 	for {
+		log.Printf("[Current Replicas] %v\n", currentReplicas)
 		newReplicas, err := getResourceReplicas(watcher, watcher.config, currentReplicas)
 		if err != nil {
 			return err
