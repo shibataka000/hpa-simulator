@@ -1,4 +1,4 @@
-package metricswatcher
+package hpasimulator
 
 import (
 	"log"
@@ -13,17 +13,17 @@ import (
 	resourceclient "k8s.io/metrics/pkg/client/clientset/versioned/typed/metrics/v1beta1"
 )
 
-type MetricsWatcher interface {
+type HpaSimulator interface {
 	Start() error
 }
 
-type metricsWatcher struct {
+type hpaSimulator struct {
 	metricsClient *resourceclient.MetricsV1beta1Client
 	podInformer   corev1.PodInformer
 	config        *config
 }
 
-func NewMetricsWatcher(clientConfig *rest.Config, config *config) (MetricsWatcher, error) {
+func NewHpaSimulator(clientConfig *rest.Config, config *config) (HpaSimulator, error) {
 	metricsClient := resourceclient.NewForConfigOrDie(clientConfig)
 
 	clientset, err := kubernetes.NewForConfig(clientConfig)
@@ -41,14 +41,14 @@ func NewMetricsWatcher(clientConfig *rest.Config, config *config) (MetricsWatche
 	informerFactory.Start(wait.NeverStop)
 	informerFactory.WaitForCacheSync(wait.NeverStop)
 
-	return &metricsWatcher{metricsClient, podInformer, config}, nil
+	return &hpaSimulator{metricsClient, podInformer, config}, nil
 }
 
-func (watcher *metricsWatcher) Start() error {
+func (simulator *hpaSimulator) Start() error {
 	currentReplicas := int32(1)
 	for {
 		log.Printf("[Current Replicas] %v\n", currentReplicas)
-		newReplicas, err := getResourceReplicas(watcher, watcher.config, currentReplicas)
+		newReplicas, err := getResourceReplicas(simulator, simulator.config, currentReplicas)
 		if err != nil {
 			return err
 		}

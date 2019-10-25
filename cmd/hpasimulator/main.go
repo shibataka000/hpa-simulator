@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/shibataka000/hpa-simulator/pkg/kubernetes"
 	"github.com/shibataka000/hpa-simulator/pkg/hpasimulator"
+	"github.com/shibataka000/hpa-simulator/pkg/kubernetes"
 	"github.com/urfave/cli"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )

@@ -1,4 +1,4 @@
-package metricswatcher
+package hpasimulator
 
 import (
 	"fmt"
@@ -23,13 +23,13 @@ type PodMetric struct {
 type PodMetricsInfo map[string]PodMetric
 
 // https://github.com/kubernetes/kubernetes/blob/81a8b9804a3bf310cb74446bd8a8e08e0317de22/pkg/controller/podautoscaler/replica_calculator.go#L62
-func getResourceReplicas(watcher *metricsWatcher, config *config, currentReplicas int32) (replicaCount int32, err error) {
-	metrics, _, err := getResourceMetric(watcher.metricsClient, config.resource, config.namespace, config.selector)
+func getResourceReplicas(simulator *hpaSimulator, config *config, currentReplicas int32) (replicaCount int32, err error) {
+	metrics, _, err := getResourceMetric(simulator.metricsClient, config.resource, config.namespace, config.selector)
 	if err != nil {
 		return 0, err
 	}
 
-	podLister := watcher.podInformer.Lister()
+	podLister := simulator.podInformer.Lister()
 	podList, err := podLister.Pods(config.namespace).List(config.selector)
 	if len(podList) == 0 {
 		return 0, fmt.Errorf("len(podList) == 0")

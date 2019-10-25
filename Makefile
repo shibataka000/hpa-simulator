@@ -28,11 +28,11 @@ test:
 ci: build
 
 build: checkfmt lint test
-	cd cmd/metricswatcher; go build
+	cd cmd/hpasimulator; go build
 
 # install: checkfmt lint test
 install: fmt
-	cd cmd/metricswatcher; go install
+	cd cmd/hpasimulator; go install
 
 release: checkfmt lint test
 	gox -osarch $(GOX_OSARCH) -output=$(GOX_OUTPUT)

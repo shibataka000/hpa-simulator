@@ -1,4 +1,4 @@
-module github.com/shibataka000/metrics-watcher
+module github.com/shibataka000/hpa-simulator
 
 go 1.13
 

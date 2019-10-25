@@ -1,4 +1,4 @@
-package metricswatcher
+package hpasimulator
 
 import (
 	"time"
