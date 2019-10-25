@@ -1,4 +1,4 @@
-# Metrics Watcher
+# HPA Simulator
 
 ## Description
 This tool output some information to know HorizontalPodAutoscaler internal behavior. For example,
@@ -14,7 +14,7 @@ Go 1.13.3 or later
 
 ## Usage
 ```bash
-metricswatcher
+hpasimulator
 ```
 
 Output
@@ -24,8 +24,8 @@ Output
 
 ## Install
 ```bash
-git clone https://github.com/shibataka000/metrics-watcher
-cd metrics-watcher
+git clone https://github.com/shibataka000/hpa-simulator
+cd hpa-simulator
 make install
 ```
 

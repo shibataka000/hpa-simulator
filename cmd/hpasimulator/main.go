@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/shibataka000/metrics-watcher/pkg/kubernetes"
-	"github.com/shibataka000/metrics-watcher/pkg/metricswatcher"
+	"github.com/shibataka000/hpa-simulator/pkg/kubernetes"
+	"github.com/shibataka000/hpa-simulator/pkg/hpasimulator"
 	"github.com/urfave/cli"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
@@ -18,25 +18,25 @@ func action(c *cli.Context) error {
 	}
 	log.Printf("%v\n", clientConfig)
 
-	config, err := metricswatcher.NewConfig(c.String("namespace"), c.String("selector"))
+	config, err := hpasimulator.NewConfig(c.String("namespace"), c.String("selector"))
 	if err != nil {
 		return err
 	}
-	watcher, err := metricswatcher.NewMetricsWatcher(clientConfig, config)
+	simulator, err := hpasimulator.NewHpaSimulator(clientConfig, config)
 	if err != nil {
 		return err
 	}
 
-	err = watcher.Start()
+	err = simulator.Start()
 
 	return err
 }
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "metricswatcher"
-	app.Usage = "Output some information to know HorizontalPodAutoscaler internal behavior"
-	app.UsageText = "metricswatcher deployment"
+	app.Name = "hpasimulator"
+	app.Usage = "Simulate HorizontalPodAutoscaler and output some information to know it's internal behavior"
+	app.UsageText = "hpasimulator [flags]"
 	app.Version = "v0.0.1"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
