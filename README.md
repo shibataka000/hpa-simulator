@@ -1,13 +1,10 @@
 # HPA Simulator
 
 ## Description
-This tool output some information to know HorizontalPodAutoscaler internal behavior. For example,
-
-- Container metrics from [metrics-server](https://github.com/kubernetes-incubator/metrics-server)
+This tool simulate HorizontalPodAutoscaler and output some information to know it's internal behavior.
+This tool is developed to debug HorizontalPodAutoscaler behavior.
 
 This tool support only resource metrics. This tool doesn't support custom metrics and external metrics.
-
-This tool is developed to debug HorizontalPodAutoscaler behavior.
 
 ## Requirement
 Go 1.13.3 or later
