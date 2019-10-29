@@ -50,7 +50,7 @@ func (simulator *hpaSimulator) Start() error {
 		log.Printf("[Current Replicas] %v\n", currentReplicas)
 		newReplicas, err := getResourceReplicas(simulator, simulator.config, currentReplicas)
 		if err != nil {
-			return err
+			log.Println(err)
 		}
 		if currentReplicas != newReplicas {
 			log.Printf("[Scale] %v -> %v\n", currentReplicas, newReplicas)
