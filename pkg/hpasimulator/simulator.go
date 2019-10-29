@@ -6,11 +6,11 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
-	corev1 "k8s.io/client-go/informers/core/v1"
+	core "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-	resourceclient "k8s.io/metrics/pkg/client/clientset/versioned/typed/metrics/v1beta1"
+	metrics "k8s.io/metrics/pkg/client/clientset/versioned/typed/metrics/v1beta1"
 )
 
 type HpaSimulator interface {
@@ -18,13 +18,13 @@ type HpaSimulator interface {
 }
 
 type hpaSimulator struct {
-	metricsClient *resourceclient.MetricsV1beta1Client
-	podInformer   corev1.PodInformer
+	metricsClient *metrics.MetricsV1beta1Client
+	podInformer   core.PodInformer
 	config        *config
 }
 
 func NewHpaSimulator(clientConfig *rest.Config, config *config) (HpaSimulator, error) {
-	metricsClient := resourceclient.NewForConfigOrDie(clientConfig)
+	metricsClient := metrics.NewForConfigOrDie(clientConfig)
 
 	clientset, err := kubernetes.NewForConfig(clientConfig)
 	if err != nil {
